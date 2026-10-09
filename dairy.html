@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <title>የቢሮ ዲያሪ እና የስራ ዝርዝር</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
+        .container { max-width: 1100px; background: white; margin: 0 auto; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2, h3 { color: #1e3a8a; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; margin-top: 0; }
+        
+        /* የቢሮ ሲስተም ሊንኮች */
+        .links { margin-bottom: 20px; background: #eff6ff; padding: 12px; border-radius: 6px; font-size: 14px; }
+        .links a { margin-right: 15px; color: #1d4ed8; text-decoration: none; font-weight: bold; }
+        .links a:hover { text-decoration: underline; }
+
+        /* ገጹን ለሁለት መክፈያ (Layout) */
+        .main-content { display: flex; gap: 30px; margin-top: 20px; }
+        .left-column { flex: 1; background: #fafafa; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .right-column { flex: 1.5; background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; }
+
+        /* To-Do List ዲዛይን */
+        .todo-input-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        .todo-input { flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+        .todo-list { list-style: none; padding: 0; margin: 0; }
+        .todo-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; background: white; border: 1px solid #e2e8f0; margin-bottom: 8px; border-radius: 6px; }
+        .todo-item.completed span { text-decoration: line-through; color: #94a3b8; }
+        .todo-checkbox { width: 18px; height: 18px; cursor: pointer; margin-right: 10px; }
+        .todo-text-wrapper { display: flex; align-items: center; }
+
+        /* Diary ዲዛይን */
+        textarea { width: 100%; height: 100px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 15px; resize: vertical; }
+        button { background-color: #2563eb; color: white; border: none; padding: 8px 16px; font-size: 14px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #1d4ed8; }
+        .add-todo-btn { background-color: #10b981; }
+        .add-todo-btn:hover { background-color: #059669; }
+        .entry-list { margin-top: 20px; max-height: 400px; overflow-y: auto; }
+        .entry { background: #f8fafc; border-left: 5px solid #2563eb; padding: 12px; margin-bottom: 12px; border-radius: 0 6px 6px 0; position: relative; }
+        .time { font-size: 11px; color: #64748b; font-weight: bold; margin-bottom: 5px; }
+        .text { font-size: 14px; color: #334155; white-space: pre-wrap; }
+        .delete-btn { background: #ef4444; padding: 3px 8px; font-size: 11px; border-radius: 4px; }
+        .delete-btn:hover { background: #dc2626; }
+        .diary-action { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📓 የእኔ ቢሮ የስራ ረዳት (Diary & To-Do)</h2>
+    
+    <!-- የውስጥ ሲስተም ማገናኛዎች -->
+    <div class="links">
+        🔗 <strong>የቢሮ ሲስተሞች፡</strong> 
+        <a href="http://172.21.33(S(l542mxxi4twsmynk1ao45eyy))/Contribution/AlternativeContribution.aspx" target="_blank">PCMS ሲስተም</a>
+        <a href="http://172.21.33" target="_blank">PRMS ሲስተም</a>
+    </div>
+
+    <div class="main-content">
+        
+        <!-- የግራ ክፍል፡ To-Do List -->
+        <div class="left-column">
+            <h3>✅ የዛሬ ስራዎች (To-Do)</h3>
+            <div class="todo-input-group">
+                <input type="text" id="todoInput" class="todo-input" placeholder="አዲስ ስራ እዚህ ይጻፉ...">
+                <button onclick="addTodo()" class="add-todo-btn">ጨምር</button>
+            </div>
+            <ul id="todoList" class="todo-list"></ul>
+        </div>
+
+        <!-- የቀኝ ክፍል፡ Diary -->
+        <div class="right-column">
+            <h3>📝 የእለት ማስታወሻ ደብተር (Diary)</h3>
+            <textarea id="diaryInput" placeholder="የዛሬ ስራ አጠቃላይ ማስታወሻ ወይም የተከናወኑ ዋና ዋና ጉዳዮችን እዚህ ያስቀምጡ..."></textarea>
+            <div class="diary-action">
+                <button onclick="saveDiaryEntry()">💾 ማስታወሻውን አስቀምጥ</button>
+            </div>
+            <div class="entry-list" id="entryList"></div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // ገጹ ሲከፈት የቆዩ መረጃዎችን ያወጣል
+    document.addEventListener("DOMContentLoaded", () => {
+        loadTodos();
+        loadDiaryEntries();
+    });
+
+    // ----------------- TO-DO LIST FUNCTIONS -----------------
+    function addTodo() {
+        const todoText = document.getElementById("todoInput").value.trim();
+        if (todoText === "") return;
+
+        const todo = { id: Date.now(), text: todoText, completed: false };
+        let todos = JSON.parse(localStorage.getItem("office_todos")) || [];
+        todos.push(todo);
+        localStorage.setItem("office_todos", JSON.stringify(todos));
+
+        document.getElementById("todoInput").value = "";
+        loadTodos();
+    }
+
+    function loadTodos() {
+        const todoList = document.getElementById("todoList");
+        todoList.innerHTML = "";
+        const todos = JSON.parse(localStorage.getItem("office_todos")) || [];
+
+        todos.forEach(todo => {
+            const li = document.createElement("li");
+            li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+            li.innerHTML = `
+                <div class="todo-text-wrapper">
+                    <input type="checkbox" class="todo-checkbox" ${todo.completed ? 'checked' : ''} onclick="toggleTodo(${todo.id})">
+                    <span>${todo.text}</span>
+                </div>
+                <button class="delete-btn" onclick="deleteTodo(${todo.id})">X</button>
+            `;
+            todoList.appendChild(li);
+        });
+    }
+
+    function toggleTodo(id) {
+        let todos = JSON.parse(localStorage.getItem("office_todos")) || [];
+        todos = todos.map(todo => todo.id === id ? { ...todo, completed: !todo.completed } : todo);
+        localStorage.setItem("office_todos", JSON.stringify(todos));
+        loadTodos();
+    }
+
+    function deleteTodo(id) {
+        let todos = JSON.parse(localStorage.getItem("office_todos")) || [];
+        todos = todos.filter(todo => todo.id !== id);
+        localStorage.setItem("office_todos", JSON.stringify(todos));
+        loadTodos();
+    }
+
+    // ----------------- DIARY FUNCTIONS -----------------
+    function saveDiaryEntry() {
+        const text = document.getElementById("diaryInput").value.trim();
+        if (text === "") { alert("እባክዎ መጀመሪያ ማስታወሻ ይጻፉ!"); return; }
+
+        const timestamp = new Date().toLocaleString('am-ET');
+        const entry = { id: Date.now(), time: timestamp, content: text };
+
+        let entries = JSON.parse(localStorage.getItem("office_diary")) || [];
+        entries.unshift(entry);
+        localStorage.setItem("office_diary", JSON.stringify(entries));
+
+        document.getElementById("diaryInput").value = "";
+        loadDiaryEntries();
+    }
+
+    function loadDiaryEntries() {
+        const entryList = document.getElementById("entryList");
+        entryList.innerHTML = "";
+        const entries = JSON.parse(localStorage.getItem("office_diary")) || [];
+
+        entries.forEach(entry => {
+            const div = document.createElement("div");
+            div.className = "entry";
+            div.innerHTML = `
+                <div class="time">📅 ${entry.time}</div>
+                <div class="text">${entry.content}</div>
+                <div style="text-align: right; margin-top: 5px;">
+                    <button class="delete-btn" onclick="deleteDiaryEntry(${entry.id})">አጥፋ</button>
+                </div>
+            `;
+            entryList.appendChild(div);
+        });
+    }
+
+    function deleteDiaryEntry(id) {
+        if (confirm("ይህንን ማስታወሻ ማጥፋት ይፈልጋሉ?")) {
+            let entries = JSON.parse(localStorage.getItem("office_diary")) || [];
+            entries = entries.filter(entry => entry.id !== id);
+            localStorage.setItem("office_diary", JSON.stringify(entries));
+            loadDiaryEntries();
+        }
+    }
+</script>
+
+</body>
+</html>
